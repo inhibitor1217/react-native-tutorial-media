@@ -9,11 +9,14 @@ const TOGGLE_CONTROL_PANEL = "video/toggleControlPanel" as const;
 const SHOW_CONTROL_PANEL = "video/showControlPanel" as const;
 const HIDE_CONTROL_PANEL = "video/hideControlPanel" as const;
 const SET_PLAY_STATE = "video/setPlayState" as const;
+const UPDATE_PLAY_STATUS = "video/updatePlayStatus" as const;
 
 const initialState: VideoState = {
   videoRef: null,
   isControlPanelVisible: true,
   playState: VideoPlayState.Paused,
+  duration: 0,
+  position: 0,
 };
 
 export const loadStart = () => ({ type: LOAD_START });
@@ -29,6 +32,14 @@ const setPlayState = (videoPlayState: VideoPlayState) => ({
   type: SET_PLAY_STATE,
   videoPlayState,
 });
+export const updatePlayStatus = (
+  duration: number | undefined,
+  position: number
+) => ({
+  type: UPDATE_PLAY_STATUS,
+  duration,
+  position,
+});
 
 type VideoAction =
   | ReturnType<typeof loadStart>
@@ -36,7 +47,8 @@ type VideoAction =
   | ReturnType<typeof toggleControlPanel>
   | ReturnType<typeof showControlPanel>
   | ReturnType<typeof hideControlPanel>
-  | ReturnType<typeof setPlayState>;
+  | ReturnType<typeof setPlayState>
+  | ReturnType<typeof updatePlayStatus>;
 
 export const playVideo = (): ThunkAction<
   Promise<void>,
@@ -112,6 +124,13 @@ const videoReducer = (
       return { ...state, isControlPanelVisible: false };
     case SET_PLAY_STATE:
       return { ...state, playState: action.videoPlayState };
+    case UPDATE_PLAY_STATUS:
+      return {
+        ...state,
+        duration:
+          action.duration !== undefined ? action.duration : state.duration,
+        position: action.position,
+      };
     default:
       return state;
   }

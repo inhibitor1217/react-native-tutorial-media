@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../types/store";
 import { toggleControlPanel } from "../../store/modules/video";
 import TogglePlayButton from "../common/TogglePlayButton";
+import ProgressBar from "../common/ProgressBar";
 
 const styles = StyleSheet.create({
   container: {
@@ -56,7 +57,12 @@ const VideoControlPanel = () => {
       <Animated.View
         style={{ ...styles.container, opacity: fadeOpactiyRef.current }}
       >
-        {isVideoControlPanelVisible && <TogglePlayButton />}
+        {isVideoControlPanelVisible && (
+          <React.Fragment>
+            <TogglePlayButton />
+            <ProgressBar />
+          </React.Fragment>
+        )}
       </Animated.View>
     </TouchableNativeFeedback>
   );

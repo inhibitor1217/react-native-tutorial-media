@@ -5,6 +5,8 @@ export type VideoState = {
   videoRef: Video | null;
   isControlPanelVisible: boolean;
   playState: VideoPlayState;
+  duration: number;
+  position: number;
 };
 
 export type RootState = {

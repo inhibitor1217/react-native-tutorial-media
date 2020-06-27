@@ -2,7 +2,12 @@ import React from "react";
 import { StyleSheet, View, TouchableNativeFeedback } from "react-native";
 import { Video, AVPlaybackStatus } from "expo-av";
 import { useDispatch } from "react-redux";
-import { loadStart, load, resetVideo } from "../../store/modules/video";
+import {
+  loadStart,
+  load,
+  resetVideo,
+  updatePlayStatus,
+} from "../../store/modules/video";
 
 const DEMO_VIDEO_SOURCE =
   "http://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4";
@@ -33,6 +38,10 @@ const VideoPlayer = () => {
     if (status.isLoaded) {
       if (status.didJustFinish) {
         dispatch(resetVideo());
+      } else {
+        dispatch(
+          updatePlayStatus(status.durationMillis, status.positionMillis)
+        );
       }
     }
   };
