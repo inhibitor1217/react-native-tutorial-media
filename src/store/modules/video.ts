@@ -10,10 +10,14 @@ const SHOW_CONTROL_PANEL = "video/showControlPanel" as const;
 const HIDE_CONTROL_PANEL = "video/hideControlPanel" as const;
 const SET_PLAY_STATE = "video/setPlayState" as const;
 const UPDATE_PLAY_STATUS = "video/updatePlayStatus" as const;
+const SET_IS_SEEKING_FORWARD = "video/setIsSeekingForward" as const;
+const SET_IS_SEEKING_BACKWARD = "video/setIsSeekingBackward" as const;
 
 const initialState: VideoState = {
   videoRef: null,
   isControlPanelVisible: true,
+  isSeekingForward: false,
+  isSeekingBackward: false,
   playState: VideoPlayState.Paused,
   duration: 0,
   position: 0,
@@ -40,6 +44,14 @@ export const updatePlayStatus = (
   duration,
   position,
 });
+const setIsSeekingForward = (value: boolean) => ({
+  type: SET_IS_SEEKING_FORWARD,
+  value,
+});
+const setIsSeekingBackward = (value: boolean) => ({
+  type: SET_IS_SEEKING_BACKWARD,
+  value,
+});
 
 type VideoAction =
   | ReturnType<typeof loadStart>
@@ -48,13 +60,16 @@ type VideoAction =
   | ReturnType<typeof showControlPanel>
   | ReturnType<typeof hideControlPanel>
   | ReturnType<typeof setPlayState>
-  | ReturnType<typeof updatePlayStatus>;
+  | ReturnType<typeof updatePlayStatus>
+  | ReturnType<typeof setIsSeekingForward>
+  | ReturnType<typeof setIsSeekingBackward>;
 
 const SHOW_SPINNER_TIMEOUT = 500; // ms
 const TOGGLE_CONTROL_PANEL_TIMEOUT = 2000; // ms
-const USE_LONG_INTERVAL_THRESHOLD = 60000; // ms
+export const USE_LONG_INTERVAL_THRESHOLD = 60000; // ms
 const JUMP_INTERVAL_LONG = 10000; // ms
 const JUMP_INTERVAL_SHORT = 5000; // ms
+const SHOW_SEEKING_ICON_INTERVAL = 500; // ms
 let timeout: number | undefined;
 let timeoutHandler: () => void;
 
@@ -162,12 +177,18 @@ export const seekVideoForward = (): ThunkAction<
       ifLoadingTakesTimeHandler,
       SHOW_SPINNER_TIMEOUT
     );
-    const seekPosition = Math.max(
-      0,
+    const seekPosition = Math.min(
+      duration,
       position +
         (duration >= USE_LONG_INTERVAL_THRESHOLD
           ? JUMP_INTERVAL_LONG
           : JUMP_INTERVAL_SHORT)
+    );
+
+    dispatch(setIsSeekingForward(true));
+    setTimeout(
+      () => dispatch(setIsSeekingForward(false)),
+      SHOW_SEEKING_ICON_INTERVAL
     );
     await videoRef.setPositionAsync(seekPosition).then(() => {
       clearTimeout(spinnerTimeout);
@@ -204,6 +225,12 @@ export const seekVideoBackward = (): ThunkAction<
           ? JUMP_INTERVAL_LONG
           : JUMP_INTERVAL_SHORT)
     );
+
+    dispatch(setIsSeekingBackward(true));
+    setTimeout(
+      () => dispatch(setIsSeekingBackward(false)),
+      SHOW_SEEKING_ICON_INTERVAL
+    );
     await videoRef.setPositionAsync(seekPosition).then(() => {
       clearTimeout(spinnerTimeout);
       dispatch(setPlayState(playState));
@@ -235,7 +262,7 @@ export const resetVideo = (): ThunkAction<
 const videoReducer = (
   state: VideoState = initialState,
   action: VideoAction
-) => {
+): VideoState => {
   switch (action.type) {
     case LOAD_START:
       return { ...state, playState: VideoPlayState.Pending };
@@ -255,6 +282,18 @@ const videoReducer = (
         duration:
           action.duration !== undefined ? action.duration : state.duration,
         position: action.position,
+      };
+    case SET_IS_SEEKING_FORWARD:
+      return {
+        ...state,
+        isSeekingForward: action.value,
+        isSeekingBackward: action.value ? false : state.isSeekingBackward,
+      };
+    case SET_IS_SEEKING_BACKWARD:
+      return {
+        ...state,
+        isSeekingForward: action.value ? false : state.isSeekingForward,
+        isSeekingBackward: action.value,
       };
     default:
       return state;

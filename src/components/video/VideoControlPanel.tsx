@@ -15,6 +15,7 @@ import {
 } from "../../store/modules/video";
 import TogglePlayButton from "../common/TogglePlayButton";
 import ProgressBar from "../common/ProgressBar";
+import Seek from "../common/Seek";
 
 const styles = StyleSheet.create({
   container: {
@@ -36,6 +37,12 @@ const VideoControlPanel = () => {
   const dispatch = useDispatch();
   const isVideoControlPanelVisible = useSelector(
     (state: RootState) => state.video.isControlPanelVisible
+  );
+  const isSeekingForward = useSelector(
+    (state: RootState) => state.video.isSeekingForward
+  );
+  const isSeekingBackward = useSelector(
+    (state: RootState) => state.video.isSeekingBackward
   );
   const fadeOpactiyRef = React.useRef<Animated.Value>(
     new Animated.Value(isVideoControlPanelVisible ? 1 : 0)
@@ -109,6 +116,8 @@ const VideoControlPanel = () => {
           <React.Fragment>
             <TogglePlayButton />
             <ProgressBar />
+            <Seek seekDirection="right" visible={isSeekingForward} />
+            <Seek seekDirection="left" visible={isSeekingBackward} />
           </React.Fragment>
         )}
       </Animated.View>
