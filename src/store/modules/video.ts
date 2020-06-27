@@ -6,6 +6,7 @@ import { Video } from "expo-av";
 const LOAD_START = "video/loadStart" as const;
 const LOAD = "video/load" as const;
 const TOGGLE_CONTROL_PANEL = "video/toggleControlPanel" as const;
+const SHOW_CONTROL_PANEL = "video/showControlPanel" as const;
 const HIDE_CONTROL_PANEL = "video/hideControlPanel" as const;
 const SET_PLAY_STATE = "video/setPlayState" as const;
 
@@ -20,6 +21,7 @@ export const load = (videoRef: Video) => ({ type: LOAD, videoRef });
 export const toggleControlPanel = () => ({
   type: TOGGLE_CONTROL_PANEL,
 });
+export const showControlPanel = () => ({ type: SHOW_CONTROL_PANEL });
 export const hideControlPanel = () => ({
   type: HIDE_CONTROL_PANEL,
 });
@@ -32,6 +34,7 @@ type VideoAction =
   | ReturnType<typeof loadStart>
   | ReturnType<typeof load>
   | ReturnType<typeof toggleControlPanel>
+  | ReturnType<typeof showControlPanel>
   | ReturnType<typeof hideControlPanel>
   | ReturnType<typeof setPlayState>;
 
@@ -71,6 +74,27 @@ export const pauseVideo = (): ThunkAction<
   };
 };
 
+export const resetVideo = (): ThunkAction<
+  Promise<void>,
+  RootState,
+  null,
+  VideoAction
+> => {
+  return async (dispatch, getState) => {
+    const videoRef = getState().video.videoRef;
+    if (!videoRef) {
+      return;
+    }
+    await videoRef
+      .setPositionAsync(0)
+      .then(() => videoRef.pauseAsync())
+      .then(() => {
+        dispatch(setPlayState(VideoPlayState.Paused));
+        dispatch(showControlPanel());
+      });
+  };
+};
+
 const videoReducer = (
   state: VideoState = initialState,
   action: VideoAction
@@ -82,6 +106,8 @@ const videoReducer = (
       return { ...initialState, videoRef: action.videoRef };
     case TOGGLE_CONTROL_PANEL:
       return { ...state, isControlPanelVisible: !state.isControlPanelVisible };
+    case SHOW_CONTROL_PANEL:
+      return { ...state, isControlPanelVisible: true };
     case HIDE_CONTROL_PANEL:
       return { ...state, isControlPanelVisible: false };
     case SET_PLAY_STATE:
