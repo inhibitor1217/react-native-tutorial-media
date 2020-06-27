@@ -73,6 +73,13 @@ const SHOW_SEEKING_ICON_INTERVAL = 500; // ms
 let timeout: number | undefined;
 let timeoutHandler: () => void;
 
+export const clearControlPanelTimeout = () => {
+  if (timeout !== undefined) {
+    clearTimeout(timeout);
+    timeout = undefined;
+  }
+};
+
 export const toggleControlPanelWithTimeout = (): ThunkAction<
   Promise<void>,
   RootState,
@@ -87,9 +94,8 @@ export const toggleControlPanelWithTimeout = (): ThunkAction<
     };
     if (!isControlPanelVisible && playState === VideoPlayState.Playing) {
       timeout = setTimeout(timeoutHandler, TOGGLE_CONTROL_PANEL_TIMEOUT);
-    } else if (timeout !== undefined) {
-      clearTimeout(timeout);
-      timeout = undefined;
+    } else {
+      clearControlPanelTimeout();
     }
   };
 };
