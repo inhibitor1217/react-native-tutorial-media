@@ -1,5 +1,5 @@
 import React from "react";
-import { Animated, StyleSheet, TouchableNativeFeedback } from "react-native";
+import { Animated, StyleSheet, TouchableWithoutFeedback } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../types/store";
 import { toggleControlPanelWithTimeout } from "../../store/modules/video";
@@ -53,7 +53,7 @@ const VideoControlPanel = () => {
   }, [isVideoControlPanelVisible]);
 
   return (
-    <TouchableNativeFeedback onPress={onPress}>
+    <TouchableWithoutFeedback onPress={onPress}>
       <Animated.View
         style={{ ...styles.container, opacity: fadeOpactiyRef.current }}
       >
@@ -64,7 +64,7 @@ const VideoControlPanel = () => {
           </React.Fragment>
         )}
       </Animated.View>
-    </TouchableNativeFeedback>
+    </TouchableWithoutFeedback>
   );
 };
 

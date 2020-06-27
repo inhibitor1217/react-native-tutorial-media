@@ -1,8 +1,16 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { useSelector } from "react-redux";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  GestureResponderEvent,
+} from "react-native";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../types/store";
+import { seekVideo } from "../../store/modules/video";
 
+const PROGRESS_CONTAINER_HORIZONTAL_PADDING = 16;
 const PROGRESS_BAR_SIZE = 12;
 const PROGRESS_TRACK_HEIGHT = 2;
 
@@ -11,7 +19,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     left: 0,
-    paddingHorizontal: 16,
+    paddingHorizontal: PROGRESS_CONTAINER_HORIZONTAL_PADDING,
     paddingBottom: 8,
     width: "100%",
   },
@@ -69,8 +77,11 @@ const formatTimeMillis = (time: number) => {
 };
 
 const ProgressBar = () => {
+  const dispatch = useDispatch();
   const videoDuration = useSelector((state: RootState) => state.video.duration);
   const videoPosition = useSelector((state: RootState) => state.video.position);
+
+  const [containerWidth, setContainerWidth] = React.useState<number>();
 
   const percentage = videoDuration
     ? (videoPosition / videoDuration) * 100
@@ -79,19 +90,41 @@ const ProgressBar = () => {
   const railStyle = { width: percentage ? `${percentage}%` : 0 };
   const knobStyle = { left: percentage ? `${percentage}%` : 0 };
 
+  const onPress = (event: GestureResponderEvent) => {
+    if (containerWidth === undefined) {
+      return;
+    }
+    const { locationX } = event.nativeEvent;
+    if (
+      locationX < 0.5 * PROGRESS_CONTAINER_HORIZONTAL_PADDING ||
+      locationX > containerWidth - 0.5 * PROGRESS_CONTAINER_HORIZONTAL_PADDING
+    ) {
+      return;
+    }
+    const progress =
+      (locationX - 0.5 * PROGRESS_CONTAINER_HORIZONTAL_PADDING) /
+      (containerWidth - 0.5 * PROGRESS_CONTAINER_HORIZONTAL_PADDING);
+    dispatch(seekVideo(progress));
+  };
+
   return (
-    <View style={styles.container}>
-      {videoDuration !== undefined && (
-        <Text style={styles.text}>{`${formatTimeMillis(
-          videoPosition
-        )} / ${formatTimeMillis(videoDuration)}`}</Text>
-      )}
-      <View style={styles.bar}>
-        <View style={styles.track} />
-        <View style={{ ...styles.rail, ...railStyle }} />
-        <View style={{ ...styles.knob, ...knobStyle }} />
+    <TouchableWithoutFeedback onPress={onPress}>
+      <View
+        style={styles.container}
+        onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+      >
+        {videoDuration !== undefined && (
+          <Text style={styles.text}>{`${formatTimeMillis(
+            videoPosition
+          )} / ${formatTimeMillis(videoDuration)}`}</Text>
+        )}
+        <View style={styles.bar}>
+          <View style={styles.track} />
+          <View style={{ ...styles.rail, ...railStyle }} />
+          <View style={{ ...styles.knob, ...knobStyle }} />
+        </View>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 

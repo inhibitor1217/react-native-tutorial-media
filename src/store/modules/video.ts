@@ -52,6 +52,7 @@ type VideoAction =
 
 const TOGGLE_CONTROL_PANEL_TIMEOUT = 2000; // ms
 let timeout: number | undefined;
+let timeoutHandler: () => void;
 export const toggleControlPanelWithTimeout = (): ThunkAction<
   Promise<void>,
   RootState,
@@ -61,7 +62,7 @@ export const toggleControlPanelWithTimeout = (): ThunkAction<
   return async (dispatch, getState) => {
     const { isControlPanelVisible, playState } = getState().video;
     dispatch(toggleControlPanel());
-    const timeoutHandler = () => {
+    timeoutHandler = () => {
       dispatch(toggleControlPanel());
     };
     if (!isControlPanelVisible && playState === VideoPlayState.Playing) {
@@ -106,6 +107,26 @@ export const pauseVideo = (): ThunkAction<
     await videoRef.pauseAsync().then(() => {
       dispatch(setPlayState(VideoPlayState.Paused));
     });
+  };
+};
+
+export const seekVideo = (
+  seekProgress: number
+): ThunkAction<Promise<void>, RootState, null, VideoAction> => {
+  return async (dispatch, getState) => {
+    const { videoRef, duration, playState } = getState().video;
+    if (!videoRef || duration === undefined) {
+      return;
+    }
+    const clamppedProgress = Math.max(0, Math.min(1, seekProgress));
+    if (timeout !== undefined) {
+      clearTimeout(timeout);
+      timeout = setTimeout(timeoutHandler, TOGGLE_CONTROL_PANEL_TIMEOUT);
+    }
+    dispatch(setPlayState(VideoPlayState.Pending));
+    await videoRef
+      .setPositionAsync(duration * clamppedProgress)
+      .then(() => dispatch(setPlayState(playState)));
   };
 };
 
