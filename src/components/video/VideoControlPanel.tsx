@@ -16,6 +16,7 @@ import {
 import TogglePlayButton from "../common/TogglePlayButton";
 import ProgressBar from "../common/ProgressBar";
 import Seek from "../common/Seek";
+import MenuBar from "../common/MenuBar";
 
 const styles = StyleSheet.create({
   container: {
@@ -114,10 +115,11 @@ const VideoControlPanel = () => {
       >
         {isVideoControlPanelVisible && (
           <React.Fragment>
+            <MenuBar />
             <TogglePlayButton />
-            <ProgressBar />
             <Seek seekDirection="right" visible={isSeekingForward} />
             <Seek seekDirection="left" visible={isSeekingBackward} />
+            <ProgressBar />
           </React.Fragment>
         )}
       </Animated.View>
