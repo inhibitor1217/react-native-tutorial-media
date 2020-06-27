@@ -42,7 +42,12 @@ const VideoPlayer = () => {
         dispatch(resetVideo());
       } else {
         dispatch(
-          updatePlayStatus(status.durationMillis, status.positionMillis)
+          updatePlayStatus(
+            status.durationMillis,
+            status.positionMillis,
+            status.isPlaying,
+            status.isBuffering
+          )
         );
       }
     }

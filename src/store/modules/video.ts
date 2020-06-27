@@ -42,11 +42,15 @@ const setPlayState = (videoPlayState: VideoPlayState) => ({
 });
 export const updatePlayStatus = (
   duration: number | undefined,
-  position: number
+  position: number,
+  isPlaying: boolean,
+  isPending: boolean
 ) => ({
   type: UPDATE_PLAY_STATUS,
   duration,
   position,
+  isPlaying,
+  isPending,
 });
 const setIsSeekingForward = (value: boolean) => ({
   type: SET_IS_SEEKING_FORWARD,
@@ -270,6 +274,7 @@ export const resetVideo = (): ThunkAction<
   };
 };
 
+let isLoading = false;
 export const loadVideoFromNative = (): ThunkAction<
   Promise<void>,
   RootState,
@@ -278,6 +283,10 @@ export const loadVideoFromNative = (): ThunkAction<
 > => {
   return async (dispatch, getState) => {
     const { videoRef, uri } = getState().video;
+    if (isLoading) {
+      return;
+    }
+    isLoading = true;
     dispatch(setPlayState(VideoPlayState.Pending));
     await ExpoImagePicker.launchImageLibraryAsync({
       mediaTypes: ExpoImagePicker.MediaTypeOptions.Videos,
@@ -287,13 +296,18 @@ export const loadVideoFromNative = (): ThunkAction<
     }).then(async (result) => {
       if (!result.cancelled) {
         if (uri === result.uri) {
+          isLoading = false;
           return;
         }
         if (videoRef) {
-          await videoRef.unloadAsync().then(() => dispatch(setUri(result.uri)));
+          await videoRef.unloadAsync().then(() => {
+            dispatch(setUri(result.uri));
+            isLoading = false;
+          });
         }
       } else {
         dispatch(setPlayState(VideoPlayState.Paused));
+        isLoading = false;
       }
     });
   };
@@ -324,6 +338,11 @@ const videoReducer = (
         duration:
           action.duration !== undefined ? action.duration : state.duration,
         position: action.position,
+        playState: action.isPending
+          ? VideoPlayState.Paused
+          : action.isPlaying
+          ? VideoPlayState.Playing
+          : VideoPlayState.Paused,
       };
     case SET_IS_SEEKING_FORWARD:
       return {

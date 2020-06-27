@@ -57,12 +57,14 @@ const VideoControlPanel = () => {
     Animated.timing(fadeOpactiyRef.current, {
       toValue: 1,
       duration: FADE_ANIMATION_DURATION,
+      useNativeDriver: true,
     }).start();
 
   const fadeOut = () =>
     Animated.timing(fadeOpactiyRef.current, {
       toValue: 0,
       duration: FADE_ANIMATION_DURATION,
+      useNativeDriver: true,
     }).start();
 
   const onSingleTap = (event: GestureResponderEvent) =>
