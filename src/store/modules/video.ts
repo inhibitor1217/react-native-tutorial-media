@@ -50,6 +50,29 @@ type VideoAction =
   | ReturnType<typeof setPlayState>
   | ReturnType<typeof updatePlayStatus>;
 
+const TOGGLE_CONTROL_PANEL_TIMEOUT = 2000; // ms
+let timeout: number | undefined;
+export const toggleControlPanelWithTimeout = (): ThunkAction<
+  Promise<void>,
+  RootState,
+  null,
+  VideoAction
+> => {
+  return async (dispatch, getState) => {
+    const { isControlPanelVisible, playState } = getState().video;
+    dispatch(toggleControlPanel());
+    const timeoutHandler = () => {
+      dispatch(toggleControlPanel());
+    };
+    if (!isControlPanelVisible && playState === VideoPlayState.Playing) {
+      timeout = setTimeout(timeoutHandler, TOGGLE_CONTROL_PANEL_TIMEOUT);
+    } else if (timeout !== undefined) {
+      clearTimeout(timeout);
+      timeout = undefined;
+    }
+  };
+};
+
 export const playVideo = (): ThunkAction<
   Promise<void>,
   RootState,

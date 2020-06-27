@@ -2,7 +2,7 @@ import React from "react";
 import { Animated, StyleSheet, TouchableNativeFeedback } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../types/store";
-import { toggleControlPanel } from "../../store/modules/video";
+import { toggleControlPanelWithTimeout } from "../../store/modules/video";
 import TogglePlayButton from "../common/TogglePlayButton";
 import ProgressBar from "../common/ProgressBar";
 
@@ -42,7 +42,7 @@ const VideoControlPanel = () => {
       duration: FADE_ANIMATION_DURATION,
     }).start();
 
-  const onPress = () => dispatch(toggleControlPanel());
+  const onPress = () => dispatch(toggleControlPanelWithTimeout());
 
   React.useEffect(() => {
     if (isVideoControlPanelVisible) {
