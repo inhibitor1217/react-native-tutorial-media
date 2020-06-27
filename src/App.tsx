@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import { registerRootComponent } from "expo";
 
 import VideoPlayer from "./components/video/VideoPlayer";
+import VideoControlPanel from "./components/video/VideoControlPanel";
 import store from "./store";
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
       <View style={styles.container}>
         <StatusBar hidden />
         <VideoPlayer />
+        <VideoControlPanel />
       </View>
     </Provider>
   );
