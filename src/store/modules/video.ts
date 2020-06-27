@@ -2,7 +2,9 @@ import { VideoState, RootState } from "../../types/store";
 import { VideoPlayState } from "../../types/video";
 import { ThunkAction } from "redux-thunk";
 import { Video } from "expo-av";
+import * as ExpoImagePicker from "expo-image-picker";
 
+const SET_URI = "video/setUri" as const;
 const LOAD_START = "video/loadStart" as const;
 const LOAD = "video/load" as const;
 const TOGGLE_CONTROL_PANEL = "video/toggleControlPanel" as const;
@@ -14,6 +16,7 @@ const SET_IS_SEEKING_FORWARD = "video/setIsSeekingForward" as const;
 const SET_IS_SEEKING_BACKWARD = "video/setIsSeekingBackward" as const;
 
 const initialState: VideoState = {
+  uri: null,
   videoRef: null,
   isControlPanelVisible: true,
   isSeekingForward: false,
@@ -23,6 +26,7 @@ const initialState: VideoState = {
   position: 0,
 };
 
+const setUri = (uri: string) => ({ type: SET_URI, uri });
 export const loadStart = () => ({ type: LOAD_START });
 export const load = (videoRef: Video) => ({ type: LOAD, videoRef });
 export const toggleControlPanel = () => ({
@@ -54,6 +58,7 @@ const setIsSeekingBackward = (value: boolean) => ({
 });
 
 type VideoAction =
+  | ReturnType<typeof setUri>
   | ReturnType<typeof loadStart>
   | ReturnType<typeof load>
   | ReturnType<typeof toggleControlPanel>
@@ -265,15 +270,46 @@ export const resetVideo = (): ThunkAction<
   };
 };
 
+export const loadVideoFromNative = (): ThunkAction<
+  Promise<void>,
+  RootState,
+  null,
+  VideoAction
+> => {
+  return async (dispatch, getState) => {
+    const { videoRef, uri } = getState().video;
+    dispatch(setPlayState(VideoPlayState.Pending));
+    await ExpoImagePicker.launchImageLibraryAsync({
+      mediaTypes: ExpoImagePicker.MediaTypeOptions.Videos,
+      allowsEditing: false,
+      allowsMultipleSelection: false,
+      quality: 1,
+    }).then(async (result) => {
+      if (!result.cancelled) {
+        if (uri === result.uri) {
+          return;
+        }
+        if (videoRef) {
+          await videoRef.unloadAsync().then(() => dispatch(setUri(result.uri)));
+        }
+      } else {
+        dispatch(setPlayState(VideoPlayState.Paused));
+      }
+    });
+  };
+};
+
 const videoReducer = (
   state: VideoState = initialState,
   action: VideoAction
 ): VideoState => {
   switch (action.type) {
+    case SET_URI:
+      return { ...state, uri: action.uri };
     case LOAD_START:
       return { ...state, playState: VideoPlayState.Pending };
     case LOAD:
-      return { ...initialState, videoRef: action.videoRef };
+      return { ...initialState, uri: state.uri, videoRef: action.videoRef };
     case TOGGLE_CONTROL_PANEL:
       return { ...state, isControlPanelVisible: !state.isControlPanelVisible };
     case SHOW_CONTROL_PANEL:

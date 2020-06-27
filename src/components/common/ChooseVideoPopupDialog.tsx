@@ -5,6 +5,8 @@ import Dialog, {
   DialogFooter,
   DialogButton,
 } from "react-native-popup-dialog";
+import { useDispatch } from "react-redux";
+import { loadVideoFromNative } from "../../store/modules/video";
 
 interface ChooseVideoPopupDialogProps {
   visible: boolean;
@@ -35,6 +37,11 @@ const styles = StyleSheet.create({
 });
 
 const ChooseVideoPopupDialog = (props: ChooseVideoPopupDialogProps) => {
+  const dispatch = useDispatch();
+  const onPressLoadVideo = () => {
+    dispatch(loadVideoFromNative());
+    props.dismiss();
+  };
   return (
     <Dialog
       visible={props.visible}
@@ -51,7 +58,7 @@ const ChooseVideoPopupDialog = (props: ChooseVideoPopupDialogProps) => {
       }
     >
       <DialogContent style={styles.container}>
-        <TouchableWithoutFeedback>
+        <TouchableWithoutFeedback onPress={onPressLoadVideo}>
           <View style={styles.content}>
             <Text style={styles.contentText}>새 영상 불러오기</Text>
           </View>
