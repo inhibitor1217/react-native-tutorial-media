@@ -50,9 +50,11 @@ type VideoAction =
   | ReturnType<typeof setPlayState>
   | ReturnType<typeof updatePlayStatus>;
 
+const SHOW_SPINNER_TIMEOUT = 500; // ms
 const TOGGLE_CONTROL_PANEL_TIMEOUT = 2000; // ms
 let timeout: number | undefined;
 let timeoutHandler: () => void;
+
 export const toggleControlPanelWithTimeout = (): ThunkAction<
   Promise<void>,
   RootState,
@@ -123,10 +125,16 @@ export const seekVideo = (
       clearTimeout(timeout);
       timeout = setTimeout(timeoutHandler, TOGGLE_CONTROL_PANEL_TIMEOUT);
     }
-    dispatch(setPlayState(VideoPlayState.Pending));
-    await videoRef
-      .setPositionAsync(duration * clamppedProgress)
-      .then(() => dispatch(setPlayState(playState)));
+    const ifLoadingTakesTimeHandler = () =>
+      dispatch(setPlayState(VideoPlayState.Pending));
+    const spinnerTimeout = setTimeout(
+      ifLoadingTakesTimeHandler,
+      SHOW_SPINNER_TIMEOUT
+    );
+    await videoRef.setPositionAsync(duration * clamppedProgress).then(() => {
+      clearTimeout(spinnerTimeout);
+      dispatch(setPlayState(playState));
+    });
   };
 };
 
