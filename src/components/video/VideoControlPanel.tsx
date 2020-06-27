@@ -1,8 +1,18 @@
 import React from "react";
-import { Animated, StyleSheet, TouchableWithoutFeedback } from "react-native";
+import {
+  Animated,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  GestureResponderEvent,
+  LayoutChangeEvent,
+} from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../types/store";
-import { toggleControlPanelWithTimeout } from "../../store/modules/video";
+import {
+  toggleControlPanelWithTimeout,
+  seekVideoForward,
+  seekVideoBackward,
+} from "../../store/modules/video";
 import TogglePlayButton from "../common/TogglePlayButton";
 import ProgressBar from "../common/ProgressBar";
 
@@ -20,6 +30,7 @@ const styles = StyleSheet.create({
 });
 
 const FADE_ANIMATION_DURATION = 150; // ms
+const DOUBLE_TAP_THRESHOLD = 300; // ms
 
 const VideoControlPanel = () => {
   const dispatch = useDispatch();
@@ -29,6 +40,10 @@ const VideoControlPanel = () => {
   const fadeOpactiyRef = React.useRef<Animated.Value>(
     new Animated.Value(isVideoControlPanelVisible ? 1 : 0)
   );
+  const doubleTapTimeoutRef: React.MutableRefObject<
+    number | null
+  > = React.useRef<number>(null);
+  const [containerWidth, setContainerWidth] = React.useState<number>();
 
   const fadeIn = () =>
     Animated.timing(fadeOpactiyRef.current, {
@@ -42,7 +57,37 @@ const VideoControlPanel = () => {
       duration: FADE_ANIMATION_DURATION,
     }).start();
 
-  const onPress = () => dispatch(toggleControlPanelWithTimeout());
+  const onSingleTap = (event: GestureResponderEvent) =>
+    dispatch(toggleControlPanelWithTimeout());
+  const onDoubleTap = (event: GestureResponderEvent) => {
+    if (containerWidth === undefined) {
+      return;
+    }
+
+    if (event.nativeEvent.locationX > 0.5 * containerWidth) {
+      dispatch(seekVideoForward());
+    } else {
+      dispatch(seekVideoBackward());
+    }
+  };
+
+  const onPress = (event: GestureResponderEvent) => {
+    if (!isVideoControlPanelVisible) {
+      onSingleTap(event);
+    } else {
+      if (doubleTapTimeoutRef.current !== null) {
+        // handle double tap
+        clearTimeout(doubleTapTimeoutRef.current);
+        doubleTapTimeoutRef.current = null;
+        onDoubleTap(event);
+      } else {
+        doubleTapTimeoutRef.current = setTimeout(() => {
+          onSingleTap(event);
+          doubleTapTimeoutRef.current = null;
+        }, DOUBLE_TAP_THRESHOLD);
+      }
+    }
+  };
 
   React.useEffect(() => {
     if (isVideoControlPanelVisible) {
@@ -56,6 +101,9 @@ const VideoControlPanel = () => {
     <TouchableWithoutFeedback onPress={onPress}>
       <Animated.View
         style={{ ...styles.container, opacity: fadeOpactiyRef.current }}
+        onLayout={(e: LayoutChangeEvent) =>
+          setContainerWidth(e.nativeEvent.layout.width)
+        }
       >
         {isVideoControlPanelVisible && (
           <React.Fragment>

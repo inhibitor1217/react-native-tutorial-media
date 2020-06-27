@@ -52,6 +52,9 @@ type VideoAction =
 
 const SHOW_SPINNER_TIMEOUT = 500; // ms
 const TOGGLE_CONTROL_PANEL_TIMEOUT = 2000; // ms
+const USE_LONG_INTERVAL_THRESHOLD = 60000; // ms
+const JUMP_INTERVAL_LONG = 10000; // ms
+const JUMP_INTERVAL_SHORT = 5000; // ms
 let timeout: number | undefined;
 let timeoutHandler: () => void;
 
@@ -132,6 +135,76 @@ export const seekVideo = (
       SHOW_SPINNER_TIMEOUT
     );
     await videoRef.setPositionAsync(duration * clamppedProgress).then(() => {
+      clearTimeout(spinnerTimeout);
+      dispatch(setPlayState(playState));
+    });
+  };
+};
+
+export const seekVideoForward = (): ThunkAction<
+  Promise<void>,
+  RootState,
+  null,
+  VideoAction
+> => {
+  return async (dispatch, getState) => {
+    const { videoRef, duration, position, playState } = getState().video;
+    if (!videoRef || duration === undefined) {
+      return;
+    }
+    if (timeout !== undefined) {
+      clearTimeout(timeout);
+      timeout = setTimeout(timeoutHandler, TOGGLE_CONTROL_PANEL_TIMEOUT);
+    }
+    const ifLoadingTakesTimeHandler = () =>
+      dispatch(setPlayState(VideoPlayState.Pending));
+    const spinnerTimeout = setTimeout(
+      ifLoadingTakesTimeHandler,
+      SHOW_SPINNER_TIMEOUT
+    );
+    const seekPosition = Math.max(
+      0,
+      position +
+        (duration >= USE_LONG_INTERVAL_THRESHOLD
+          ? JUMP_INTERVAL_LONG
+          : JUMP_INTERVAL_SHORT)
+    );
+    await videoRef.setPositionAsync(seekPosition).then(() => {
+      clearTimeout(spinnerTimeout);
+      dispatch(setPlayState(playState));
+    });
+  };
+};
+
+export const seekVideoBackward = (): ThunkAction<
+  Promise<void>,
+  RootState,
+  null,
+  VideoAction
+> => {
+  return async (dispatch, getState) => {
+    const { videoRef, duration, position, playState } = getState().video;
+    if (!videoRef || duration === undefined) {
+      return;
+    }
+    if (timeout !== undefined) {
+      clearTimeout(timeout);
+      timeout = setTimeout(timeoutHandler, TOGGLE_CONTROL_PANEL_TIMEOUT);
+    }
+    const ifLoadingTakesTimeHandler = () =>
+      dispatch(setPlayState(VideoPlayState.Pending));
+    const spinnerTimeout = setTimeout(
+      ifLoadingTakesTimeHandler,
+      SHOW_SPINNER_TIMEOUT
+    );
+    const seekPosition = Math.max(
+      0,
+      position -
+        (duration >= USE_LONG_INTERVAL_THRESHOLD
+          ? JUMP_INTERVAL_LONG
+          : JUMP_INTERVAL_SHORT)
+    );
+    await videoRef.setPositionAsync(seekPosition).then(() => {
       clearTimeout(spinnerTimeout);
       dispatch(setPlayState(playState));
     });
