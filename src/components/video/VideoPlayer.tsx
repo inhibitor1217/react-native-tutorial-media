@@ -1,6 +1,8 @@
 import React from "react";
 import { StyleSheet, View, TouchableNativeFeedback } from "react-native";
-import { Video } from "expo-av";
+import { Video, AVPlaybackStatus } from "expo-av";
+import { useDispatch } from "react-redux";
+import { loadStart, load } from "../../store/modules/video";
 
 const DEMO_VIDEO_SOURCE =
   "http://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4";
@@ -17,6 +19,18 @@ const styles = StyleSheet.create({
 });
 
 const VideoPlayer = () => {
+  const videoRef = React.useRef<Video>(null);
+  const dispatch = useDispatch();
+
+  const onLoadStart = () => dispatch(loadStart());
+  const onLoad = () => {
+    if (videoRef.current) {
+      dispatch(load(videoRef.current));
+    }
+  };
+
+  const onPlayBackStatusUpdate = (status: AVPlaybackStatus) => {};
+
   return (
     <TouchableNativeFeedback>
       <View style={styles.container}>
@@ -26,10 +40,13 @@ const VideoPlayer = () => {
           volume={1.0}
           isMuted={false}
           resizeMode={Video.RESIZE_MODE_CONTAIN}
-          shouldPlay
-          isLooping
+          shouldPlay={false}
           useNativeControls={false}
           style={styles.videoPlayer}
+          onLoadStart={onLoadStart}
+          onLoad={onLoad}
+          onPlaybackStatusUpdate={onPlayBackStatusUpdate}
+          ref={videoRef}
         />
       </View>
     </TouchableNativeFeedback>

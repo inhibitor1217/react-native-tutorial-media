@@ -1,14 +1,9 @@
 import React from "react";
-import {
-  Animated,
-  StyleSheet,
-  View,
-  Text,
-  TouchableNativeFeedback,
-} from "react-native";
+import { Animated, StyleSheet, TouchableNativeFeedback } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../types/store";
 import { toggleControlPanel } from "../../store/modules/video";
+import TogglePlayButton from "../common/TogglePlayButton";
 
 const styles = StyleSheet.create({
   container: {
@@ -61,7 +56,7 @@ const VideoControlPanel = () => {
       <Animated.View
         style={{ ...styles.container, opacity: fadeOpactiyRef.current }}
       >
-        <Text>Video Control Panel</Text>
+        {isVideoControlPanelVisible && <TogglePlayButton />}
       </Animated.View>
     </TouchableNativeFeedback>
   );
